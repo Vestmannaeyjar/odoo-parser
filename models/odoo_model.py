@@ -1,12 +1,13 @@
 from models import OdooAttribute, OdooMethod
 import ast
+import textwrap
 
 
 class OdooModel:
 
     def __init__(self, class_name, class_code):
         self.class_name = class_name
-        self.class_code = class_code
+        self.class_code = textwrap.dedent(class_code)
         self.methods = []
         self.attributes = []
 
@@ -38,10 +39,10 @@ class OdooModel:
                 start = node.lineno - 1
                 end = start + len(node.body) + 1
                 method_code = ''.join(self.class_code.splitlines()[start:end])
-                self.methods.append(OdooMethod(method_name, self.class_name, method_args, method_code))
+                self.methods.append(OdooMethod(self.class_name, method_name, method_args, method_code))
 
             if isinstance(node, ast.Assign):
-                for target in node.targets:
-                    if isinstance(target, ast.Attribute) and isinstance(target.value, ast.Name):
-                        if self._is_class_level_assignment(node):
-                            self.attributes.append(OdooAttribute(target))
+                target = ast.dump(node.targets[0], annotate_fields=False)
+                value = ast.dump(node.value, annotate_fields=False)
+                if self._is_class_level_assignment(node):
+                    self.attributes.append(OdooAttribute(self.class_name, target, value))

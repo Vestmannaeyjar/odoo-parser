@@ -1,7 +1,7 @@
 import ast
 import re
 from pathlib import Path
-from odoo_model import OdooModel
+from models import OdooModel
 
 
 class OdooModule:
@@ -52,13 +52,13 @@ class OdooModule:
         models = {}
         for py in self.pys:
             with open(py, 'r', encoding='utf-8') as file:
-                tree = ast.parse(file.read())
                 lines = file.readlines()
+                tree = ast.parse(''.join(lines))
 
             for node in ast.walk(tree):
                 if isinstance(node, ast.ClassDef):
                     class_name = node.name
-                    class_code = ''.join(lines[node.lineno - 1:node.end_lineno])
+                    class_code = ''.join(lines[node.lineno-1:node.end_lineno])
                     models[class_name] = OdooModel(class_name, class_code)
         return models
 

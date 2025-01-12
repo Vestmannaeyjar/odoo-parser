@@ -23,3 +23,6 @@ print(a.auto_install)
 print(a.application)
 print(a.images)
 
+for model_name, model in a.models.items():
+    print(model_name, model.methods, model.attributes)
+
