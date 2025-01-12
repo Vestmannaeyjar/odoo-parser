@@ -1,6 +1,7 @@
 import ast
 import re
 from pathlib import Path
+from odoo_model import OdooModel
 
 
 class OdooModule:
@@ -13,6 +14,7 @@ class OdooModule:
         self.directories = [str(d) for d in self.module_path.rglob("*") if d.is_dir()]
         self.xmls = [str(f) for f in self.module_path.rglob("*.xml")]
         self.pys = [str(f) for f in self.module_path.rglob("*.py")]
+        self.models = self.get_models()
 
         # Listing of manifest data
         manifest_path = self.module_path / '__manifest__.py'
@@ -45,3 +47,19 @@ class OdooModule:
         self.auto_install = manifest_dict.get('auto_install', None)
         self.application = manifest_dict.get('application', None)
         self.images = manifest_dict.get('images', None)
+
+    def get_models(self):
+        models = {}
+        for py in self.pys:
+            with open(py, 'r', encoding='utf-8') as file:
+                tree = ast.parse(file.read())
+                lines = file.readlines()
+
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ClassDef):
+                    class_name = node.name
+                    class_code = ''.join(lines[node.lineno - 1:node.end_lineno])
+                    models[class_name] = OdooModel(class_name, class_code)
+        return models
+
+
